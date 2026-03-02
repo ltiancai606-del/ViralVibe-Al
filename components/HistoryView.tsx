@@ -10,6 +10,7 @@ interface HistoryViewProps {
 
 export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onEdit }) => {
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Helper to split caption
   const splitCaption = (text: string) => {
@@ -26,12 +27,23 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (confirm('确定要删除这条发布记录吗？')) {
+    
+    if (deletingId === id) {
+      // Confirmed deletion
       onDelete(id);
+      setDeletingId(null);
       if (selectedItem?.id === id) {
         setSelectedItem(null);
       }
+    } else {
+      // First click: prompt for confirmation
+      setDeletingId(id);
+      // Auto-cancel confirmation after 3 seconds
+      setTimeout(() => {
+        setDeletingId((current) => current === id ? null : current);
+      }, 3000);
     }
   };
 
@@ -162,29 +174,37 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
                onClick={() => setSelectedItem(item)}
                className="break-inside-avoid glass-card rounded-2xl overflow-hidden group hover:ring-2 hover:ring-rose-500/50 transition-all cursor-pointer active:scale-95"
             >
-              <div className="relative pointer-events-none">
+              <div className="relative">
                 <img 
                   src={getImageSrc(item)} 
-                  className="w-full object-cover" 
+                  className="w-full object-cover pointer-events-none" 
                   alt="History thumbnail"
                   style={{ 
                     transform: `scale(${item.zoom ?? 1}) translate(${(item.panX ?? 0) / (item.zoom ?? 1)}px, ${(item.panY ?? 0) / (item.zoom ?? 1)}px)`,
                     transformOrigin: 'center center'
                   }} 
                 />
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-                 <div className="absolute bottom-2 left-2 right-2">
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 pointer-events-none"></div>
+                 <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
                    <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded backdrop-blur-md border border-white/10 truncate block">
                      {item.overlayText}
                    </span>
                  </div>
                  <button 
                    onClick={(e) => handleDelete(e, item.id)}
-                   className="absolute top-2 right-2 p-1.5 bg-black/40 rounded-full text-white/70 hover:bg-red-500 hover:text-white pointer-events-auto backdrop-blur-sm transition-colors"
+                   className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-colors z-10 ${
+                     deletingId === item.id 
+                       ? 'bg-red-600 text-white px-3 text-xs font-bold' 
+                       : 'bg-black/40 text-white/70 hover:bg-red-500 hover:text-white'
+                   }`}
                  >
-                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                     <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
-                   </svg>
+                   {deletingId === item.id ? (
+                     "确认删除"
+                   ) : (
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                       <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
+                     </svg>
+                   )}
                  </button>
               </div>
               
