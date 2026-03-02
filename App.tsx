@@ -7,6 +7,7 @@ import { Editor } from './components/Editor';
 import { BottomNav } from './components/BottomNav';
 import { ProfileView } from './components/ProfileView';
 import { HistoryView } from './components/HistoryView';
+import { isWeChatMiniProgram } from './services/wechat';
 
 import { CatSelector } from './components/CatSelector';
 
@@ -126,6 +127,7 @@ const processFileForAI = async (file: File): Promise<{ base64: string, mimeType:
 const App: React.FC = () => {
   // Navigation State
   const [currentTab, setCurrentTab] = useState<AppTab>(AppTab.CREATE);
+  const [isMiniProgram, setIsMiniProgram] = useState(false);
 
   // Profile State
   const [cats, setCats] = useState<CatProfile[]>([]);
@@ -146,6 +148,11 @@ const App: React.FC = () => {
 
   // --- Load Data on Mount ---
   useEffect(() => {
+    // Check WeChat environment
+    isWeChatMiniProgram().then(isMp => {
+      setIsMiniProgram(isMp);
+    });
+
     // History
     const savedHistory = localStorage.getItem('viralVibeHistory');
     if (savedHistory) {
@@ -305,8 +312,24 @@ const App: React.FC = () => {
     
     // Auto Copy for convenience
     const fullText = `${finalResult.title ? finalResult.title + '\n\n' : ''}${finalResult.caption}\n\n${finalResult.hashtags.join('')}`;
-    navigator.clipboard.writeText(fullText);
-    alert("保存成功！文案已复制，快去发布吧。");
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullText);
+        alert("保存成功！文案已复制，快去发布吧。");
+      } else {
+        // Fallback for older browsers or some webviews
+        const textArea = document.createElement("textarea");
+        textArea.value = fullText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        alert("保存成功！文案已复制，快去发布吧。");
+      }
+    } catch (err) {
+      console.warn("Clipboard copy failed", err);
+      alert("保存成功！(由于环境限制，请手动复制文案)");
+    }
     
     // Switch to Posts Tab to show it
     setCurrentTab(AppTab.POSTS);
@@ -467,19 +490,21 @@ const App: React.FC = () => {
         <div className="absolute bottom-[-10%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-blue-900/10 blur-[90px] animate-blob animation-delay-4000" />
       </div>
 
-      {/* Minimal Header */}
-      <header className="flex justify-center items-center py-4 glass sticky top-0 z-40 border-b-0 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-tr from-rose-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-rose-500/20">
-            VV
+      {/* Minimal Header - Hide in Mini Program as it has native header */}
+      {!isMiniProgram && (
+        <header className="flex justify-center items-center py-4 glass sticky top-0 z-40 border-b-0 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-tr from-rose-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-rose-500/20">
+              VV
+            </div>
+            <h1 className="text-base font-bold tracking-wide text-white">
+              ViralVibe
+            </h1>
           </div>
-          <h1 className="text-base font-bold tracking-wide text-white">
-            ViralVibe
-          </h1>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main className="container mx-auto max-w-2xl min-h-[calc(100vh-140px)]">
+      <main className={`container mx-auto max-w-2xl min-h-[calc(100vh-140px)] ${isMiniProgram ? 'pt-4' : ''}`}>
         {currentTab === AppTab.PROFILE && (
           <ProfileView cats={cats} onUpdateCats={handleUpdateCats} />
         )}

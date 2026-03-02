@@ -22,8 +22,23 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
   };
 
   const copyText = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    alert(`${label}已复制`);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        alert(`${label}已复制`);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        alert(`${label}已复制`);
+      }
+    } catch (err) {
+      console.warn("Clipboard copy failed", err);
+      alert(`由于环境限制，请手动复制${label}`);
+    }
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -172,7 +187,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
             <div 
                key={item.id} 
                onClick={() => setSelectedItem(item)}
-               className="break-inside-avoid glass-card rounded-2xl overflow-hidden group hover:ring-2 hover:ring-rose-500/50 transition-all cursor-pointer active:scale-95"
+               className="break-inside-avoid glass-card rounded-2xl overflow-hidden group hover:ring-2 hover:ring-rose-500/50 transition-all cursor-pointer"
             >
               <div className="relative">
                 <img 
@@ -192,6 +207,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
                  </div>
                  <button 
                    onClick={(e) => handleDelete(e, item.id)}
+                   onPointerDown={(e) => e.stopPropagation()}
                    className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-colors z-10 ${
                      deletingId === item.id 
                        ? 'bg-red-600 text-white px-3 text-xs font-bold' 
@@ -233,7 +249,19 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
               {/* Header */}
               <div className="flex justify-between items-center p-4 border-b border-slate-800">
                  <h3 className="text-white font-bold">作品详情</h3>
-                 <button onClick={() => setSelectedItem(null)} className="text-slate-400 hover:text-white p-2">✕</button>
+                 <div className="flex items-center gap-2">
+                   <button 
+                     onClick={(e) => handleDelete(e, selectedItem.id)}
+                     className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                       deletingId === selectedItem.id 
+                         ? 'bg-red-600 text-white' 
+                         : 'bg-slate-800 text-red-400 hover:bg-red-500/20'
+                     }`}
+                   >
+                     {deletingId === selectedItem.id ? "确认删除" : "🗑️ 删除"}
+                   </button>
+                   <button onClick={() => setSelectedItem(null)} className="text-slate-400 hover:text-white p-2">✕</button>
+                 </div>
               </div>
 
               {/* Scrollable Content */}
