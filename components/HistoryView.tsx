@@ -209,8 +209,12 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
               </div>
               
               <div className="p-3">
-                <div className="text-[10px] text-rose-400 font-bold mb-1 uppercase tracking-wide">{item.visualStyle}</div>
-                <p className="text-xs text-slate-200 line-clamp-2 leading-relaxed opacity-90">{item.caption}</p>
+                <div className="text-[10px] text-rose-400 font-bold mb-1 uppercase tracking-wide truncate" title={item.visualStyle}>
+                  {item.visualStyle?.replace(/\*\*/g, '')}
+                </div>
+                <p className="text-xs text-slate-200 line-clamp-2 leading-relaxed opacity-90 break-words">
+                  {item.caption?.replace(/\*\*/g, '')}
+                </p>
                 <div className="pt-2 mt-2 border-t border-white/5 text-[10px] text-slate-500 flex justify-between">
                    <span>{new Date(item.timestamp).toLocaleDateString()}</span>
                    <span>查看详情 &gt;</span>
@@ -278,10 +282,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
                     <div className="space-y-2">
                        <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">标题</label>
                        <div className="flex gap-2">
-                          <div className="bg-slate-800 rounded-xl p-3 text-sm text-white flex-1 font-bold">
-                             {selectedItem.title || splitCaption(selectedItem.caption).title}
+                          <div className="bg-slate-800 rounded-xl p-3 text-sm text-white flex-1 font-bold break-words">
+                             {(selectedItem.title || splitCaption(selectedItem.caption).title)?.replace(/\*\*/g, '')}
                           </div>
-                          <Button variant="secondary" onClick={() => copyText(selectedItem.title || splitCaption(selectedItem.caption).title, "标题")} className="!px-3 !py-2 shrink-0">
+                          <Button variant="secondary" onClick={() => copyText((selectedItem.title || splitCaption(selectedItem.caption).title)?.replace(/\*\*/g, ''), "标题")} className="!px-3 !py-2 shrink-0">
                              复制
                           </Button>
                        </div>
@@ -291,10 +295,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ history, onDelete, onE
                     <div className="space-y-2">
                        <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">正文内容</label>
                        <div className="flex gap-2 items-start">
-                          <div className="bg-slate-800 rounded-xl p-3 text-sm text-slate-300 flex-1 whitespace-pre-wrap leading-relaxed h-32 overflow-y-auto">
-                             {selectedItem.title ? selectedItem.caption : splitCaption(selectedItem.caption).content}
+                          <div className="bg-slate-800 rounded-xl p-3 text-sm text-slate-300 flex-1 whitespace-pre-wrap leading-relaxed h-32 overflow-y-auto break-words">
+                             {(selectedItem.title ? selectedItem.caption : splitCaption(selectedItem.caption).content)?.replace(/\*\*/g, '')}
                           </div>
-                          <Button variant="secondary" onClick={() => copyText(selectedItem.title ? selectedItem.caption : splitCaption(selectedItem.caption).content, "正文")} className="!px-3 !py-2 shrink-0">
+                          <Button variant="secondary" onClick={() => copyText((selectedItem.title ? selectedItem.caption : splitCaption(selectedItem.caption).content)?.replace(/\*\*/g, ''), "正文")} className="!px-3 !py-2 shrink-0">
                              复制
                           </Button>
                        </div>

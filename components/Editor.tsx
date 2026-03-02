@@ -126,9 +126,9 @@ export const Editor: React.FC<EditorProps> = ({
   };
 
   // --- Content State ---
-  const [overlayText, setOverlayText] = useState(initialResult.overlayText || "");
-  const [title, setTitle] = useState(initialResult.title || "");
-  const [caption, setCaption] = useState(initialResult.caption || "");
+  const [overlayText, setOverlayText] = useState((initialResult.overlayText || "").replace(/\*\*/g, ''));
+  const [title, setTitle] = useState((initialResult.title || "").replace(/\*\*/g, ''));
+  const [caption, setCaption] = useState((initialResult.caption || "").replace(/\*\*/g, ''));
   const formatHashtags = (tags: string[]) => (tags || []).map(t => t.startsWith('#') ? t : `#${t}`).join('');
   const [hashtagsString, setHashtagsString] = useState(formatHashtags(initialResult.hashtags));
   const [regenerating, setRegenerating] = useState<'caption' | 'overlay' | null>(null);
@@ -142,12 +142,12 @@ export const Editor: React.FC<EditorProps> = ({
       
       if (type === 'caption' && typeof result === 'object') {
         // Handle structured caption result
-        setTitle(result.title);
-        setCaption(result.caption);
+        setTitle((result.title || "").replace(/\*\*/g, ''));
+        setCaption((result.caption || "").replace(/\*\*/g, ''));
         setHashtagsString(formatHashtags(result.hashtags));
       } else if (type === 'overlay' && typeof result === 'string') {
         // Handle simple string result for overlay
-        setOverlayText(result);
+        setOverlayText(result.replace(/\*\*/g, ''));
       }
     } catch (e) {
       alert('生成失败，请重试');
